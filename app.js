@@ -4,12 +4,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 
 const app = express()
-
-console.log(process.env.API_KEY);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -40,15 +39,19 @@ app.get("/register", function(req, res){
 
 
 app.post("/register", function(req, res){
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
+
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash){
+        const newUser = new User({
+            email: req.body.username,
+            password: hash
+        });
+        newUser.save().then(function(){
+            res.render("secrets");
+        }).catch(function(error){
+            console.log(error);
+        });
     });
-    newUser.save().then(function(){
-        res.render("secrets");
-    }).catch(function(error){
-        console.log(error);
-    });
+
 });
 
 app.post("/login", function(req, res){
